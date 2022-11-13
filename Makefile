@@ -33,7 +33,7 @@ endif
 ifeq ($(BOARD), FANSPEED)
 DEVICE     = atmega328
 CFLAGS     = -D_AVR_FANSPEED_BOARD_
-PROGRAMMER = -c stk500v2 -P COM6
+PROGRAMMER = -c stk500v2 -P COM2 -V
 FUSES      = -U lfuse:w:0xDF:m -U hfuse:w:0xD1:m -U efuse:w:0xFC:m
 CLOCK      = 14745600
 endif

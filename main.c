@@ -70,10 +70,21 @@ int main(void)
 
     pwm_init();
 
-    pwm_set_duty(0, 0x80);
-    pwm_set_duty(1, 0x80);
-    pwm_set_duty(2, 0x80);
-    pwm_set_duty(3, 0x80);
+    while(1)
+    {
+        _delay_ms(250);
+        _delay_ms(250);
+    pwm_set_duty(0, 0x00);
+    pwm_set_duty(1, 0xFF);
+    pwm_set_duty(2, 0x00);
+    pwm_set_duty(3, 0xFF);
+_delay_ms(250);
+        _delay_ms(250);
+    pwm_set_duty(0, 0xFF);
+    pwm_set_duty(1, 0x00);
+    pwm_set_duty(2, 0xFF);
+    pwm_set_duty(3, 0x00);
+    }
 
     // Idle loop
     for (;;)

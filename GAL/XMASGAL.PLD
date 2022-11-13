@@ -1,0 +1,45 @@
+Name     XMASGAL ;
+PartNo   00 ;
+Date     13/11/2022 ;
+Revision 01 ;
+Designer Engineer ;
+Company  Matt ;
+Assembly None ;
+Location  ;
+
+// GAL20V8
+Device   g22v10 ;
+
+PIN 6=TOGGLE0;
+PIN 7=TOGGLE1;
+
+PIN 8=PWM1;
+PIN 9=PWM2;
+PIN 10=PWM3;
+PIN 11=PWM4;
+
+PIN 17=DR1;
+PIN 18=DR2;
+PIN 19=DR3;
+PIN 20=DR4;
+
+PIN 15=ENA0;
+PIN 16=ENA1;
+
+ENA0.OE = 'b'1;
+ENA1.OE = 'b'1;
+
+DR1.OE = 'b'1;
+DR2.OE = 'b'1;
+DR3.OE = 'b'1;
+DR4.OE = 'b'1;
+
+DR1 = TOGGLE0;
+DR2 = !TOGGLE0;
+
+ENA0 = TOGGLE0 & PWM1 # !TOGGLE0 & PWM2;
+
+DR3 = TOGGLE1;
+DR4 = !TOGGLE1;
+
+ENA1 = TOGGLE1 & PWM3 # !TOGGLE1 & PWM4;

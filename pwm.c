@@ -32,12 +32,12 @@
 
 ISR(TIMER0_OVF_vect)
 {
-    IO_TOGGLE(DIRA);
+    IO_TOGGLE(DIR0);
 }
 
 ISR(TIMER1_OVF_vect)
 {
-    IO_TOGGLE(DIRB);
+    IO_TOGGLE(DIR1);
 }
 
 void pwm_init(void)
@@ -46,22 +46,24 @@ void pwm_init(void)
     IO_OUTPUT(PWM0B);
     IO_OUTPUT(PWM1A);
     IO_OUTPUT(PWM1B);
-    IO_OUTPUT(DIRA);
-    IO_OUTPUT(DIRB);
+    IO_OUTPUT(DIR0);
+    IO_OUTPUT(DIR1);
 
-    IO_LOW(DIRA);
-    IO_LOW(DIRB);
+    IO_LOW(DIR0);
+    IO_LOW(DIR1);
 
     // Timer 0 setup
     TCCR0A = _BV(WGM00) | _BV(WGM01);
-    TCCR0B = _BV(CS00) | _BV(CS02); // 1024 prescaler
+    TCCR0B = _BV(CS00) | _BV(CS01); // 1024 prescaler
     TIMSK0 = _BV(TOIE0); // Interrupt on overflow
 
     TCCR0A |= _BV(COM0A1) | _BV(COM0B1); // Enable PWM output on OC1A/OC1B
 
     // Timer 1 setup
-    TCCR1A = _BV(WGM11); // 8-Bit mode
-    TCCR1B = _BV(CS10) | _BV(CS12); // 1024 prescaler
+    // 8-Bit mode
+    // 1024 prescaler
+    TCCR1A = _BV(WGM10); 
+    TCCR1B = _BV(WGM12) | _BV(CS10) | _BV(CS11);
     TIMSK1 = _BV(TOIE1); // Interrupt on overflow
 
     TCCR1A |= _BV(COM1A1) | _BV(COM1B1); // Enable PWM output on OC1A/OC1B

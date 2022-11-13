@@ -352,7 +352,7 @@ static void cmd_prompt(cmd_state_t *ccmd)
 {
     ccmd->state = CMD_READLINE;
     ccmd->count = 0;
-    printf("sc>");
+    printf("cl>");
 }
 
 void cmd_process_char(uint8_t c, uint8_t idx)

@@ -303,8 +303,8 @@
 #define PWM0B              PD5
 #define PWM1A              PB1
 #define PWM1B              PB2
-#define DIRA               PD7
-#define DIRB               PD4
+#define DIR1               PD7
+#define DIR0               PD4
 #define ONEWIRE            PC1
 #define START              PB0 //PCINT0
 #define SP2                PD5 //PCINT21
@@ -319,8 +319,8 @@
 #define PWM0B_PIN          PIND
 #define PWM1A_PIN          PINB
 #define PWM1B_PIN          PINB
-#define DIRA_PIN           PIND
-#define DIRB_PIN           PIND
+#define DIR1_PIN           PIND
+#define DIR0_PIN           PIND
 #define ONEWIRE_PIN        PINC
 #define START_PIN          PINB
 #define SP2_PIN            PIND
@@ -335,8 +335,8 @@
 #define PWM0B_PORT         PORTD
 #define PWM1A_PORT         PORTB
 #define PWM1B_PORT         PORTB
-#define DIRA_PORT          PORTD
-#define DIRB_PORT          PORTD
+#define DIR1_PORT          PORTD
+#define DIR0_PORT          PORTD
 #define ONEWIRE_PORT       PORTC
 #define START_PORT         PORTB
 #define SP2_PORT           PORTD
@@ -351,8 +351,8 @@
 #define PWM0B_DDR          DDRD
 #define PWM1A_DDR          DDRB
 #define PWM1B_DDR          DDRB
-#define DIRA_DDR           DDRD
-#define DIRB_DDR           DDRD
+#define DIR1_DDR           DDRD
+#define DIR0_DDR           DDRD
 #define ONEWIRE_DDR        DDRC
 #define START_DDR          DDRB
 #define SP2_DDR            DDRD
