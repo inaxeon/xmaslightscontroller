@@ -1,0 +1,1 @@
+SET PATH=%PATH%;C:\Dev\compilers\avr-gcc\bin;C:\Dev\compilers\coreutils\bin
