@@ -25,7 +25,6 @@ typedef struct {
 } sys_config_t;
 
 void load_configuration(sys_config_t *config);
-void default_configuration(sys_config_t *config);
-void save_configuration(sys_config_t *config);
+void configuration_bootprompt(sys_config_t *config);
 
 #endif /* __CONFIG_H__ */

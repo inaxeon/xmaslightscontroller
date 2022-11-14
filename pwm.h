@@ -21,5 +21,8 @@
 
 void pwm_init(void);
 void pwm_set_duty(uint8_t channel, uint8_t duty);
+void pwm_enable(void);
+void pwm_disable(void);
+
 
 #endif /* __PWM_H__ */

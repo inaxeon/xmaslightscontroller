@@ -25,12 +25,12 @@
 #include <stdbool.h>
 #include <util/delay.h>
 #include <avr/io.h>
+#include <avr/wdt.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
 #include "iopins.h"
 #include "config.h"
-#include "cmd.h"
 #include "usart.h"
 #include "util.h"
 #include "pwm.h"
@@ -38,6 +38,7 @@
 typedef struct
 {
     sys_config_t *config;
+    bool running;
 } sys_runstate_t;
 
 sys_config_t _g_cfg;
@@ -46,6 +47,12 @@ sys_runstate_t _g_rs;
 FILE uart_str = FDEV_SETUP_STREAM(print_char, NULL, _FDEV_SETUP_RW);
 
 static void io_init(void);
+int random_number(const int min, const int max);
+void run_sequence(sys_runstate_t *rs, uint8_t seq);
+void check_ctrld(void);
+
+void sequence_00(sys_runstate_t *rs);
+void sequence_01(sys_runstate_t *rs);
 
 int main(void)
 {
@@ -53,6 +60,7 @@ int main(void)
     sys_config_t *config = &_g_cfg;
     rs->config = config;
 
+    wdt_enable(WDTO_2S);
     io_init();
     g_irq_enable();
 
@@ -63,45 +71,125 @@ int main(void)
     printf("\r\n");
 
     load_configuration(config);
+    configuration_bootprompt(config);
 
-    printf("Starting up...\r\n");
+    printf("Press Ctrl+D at any time to reset\r\n");
 
     CLRWDT();
 
     pwm_init();
-
-    while(1)
-    {
-        _delay_ms(250);
-        _delay_ms(250);
-    pwm_set_duty(0, 0x00);
-    pwm_set_duty(1, 0xFF);
-    pwm_set_duty(2, 0x00);
-    pwm_set_duty(3, 0xFF);
-_delay_ms(250);
-        _delay_ms(250);
-    pwm_set_duty(0, 0xFF);
-    pwm_set_duty(1, 0x00);
-    pwm_set_duty(2, 0xFF);
-    pwm_set_duty(3, 0x00);
-    }
+    pwm_enable();
 
     // Idle loop
     for (;;)
     {
-        //timeout_check();
-        cmd_process(config);
+        rs->running = true;
+        run_sequence(rs, config->start_seq);
+    }
+}
+
+void run_sequence(sys_runstate_t *rs, uint8_t seq)
+{
+    switch (seq)
+    {
+        case 0:
+            sequence_00(rs);
+            break;
+        case 1:
+            sequence_01(rs);
+            break;
+        default:
+            printf("\r\nInvalid sequence %d. Resetting...\r\n", rs->config->start_seq);
+            reset();
+    }
+}
+
+// "On" at 1/4 brightness
+void sequence_00(sys_runstate_t *rs)
+{
+    uint8_t full_brightness = 0x40;
+
+    for (uint8_t i = 0; i < 4; i++)
+        pwm_set_duty(i, full_brightness);
+
+    while (rs->running)
+    {
         CLRWDT();
+        check_ctrld();
     }
 }
 
 
+// "Sparkle" between 40% and 100% brightness
+void sequence_01(sys_runstate_t *rs)
+{
+    while (rs->running)
+    {
+        uint8_t channel = (uint8_t)random_number(0, 4);
+        uint8_t full_brightness = 0xFF;
+        uint8_t low_brightness = 0x40;
+        uint8_t step_size = (full_brightness - low_brightness) / 5;
+        uint16_t delay = (uint16_t)random_number(50, 400);
+
+        for (uint8_t i = 1; i < 5; i++)
+        {
+            pwm_set_duty(channel, low_brightness + (i * step_size));
+            _delay_ms(10);
+        }
+
+        pwm_set_duty(channel, full_brightness);
+        _delay_ms(50);
+
+        for (uint8_t i = 4; i > 0; i--)
+        {
+            pwm_set_duty(channel, low_brightness + (i * step_size));
+            _delay_ms(10);
+        }
+
+        pwm_set_duty(channel, low_brightness);
+
+        for (int i = 0; i < delay; i++)
+            _delay_ms(1);
+
+        CLRWDT();
+        check_ctrld();
+    }
+}
+
+void check_ctrld(void)
+{
+    if (console_data_ready())
+    {
+        char c = console_get();
+        if (c == 4)
+        {
+            printf("\r\nCtrl+D received. Resetting...\r\n");
+            while (console_busy());
+            reset();
+        }
+    }
+}
+
+int random_number(const int min, const int max)
+{
+    return rand() % (max - min) + min;
+}
+
 static void io_init(void)
 {
-#ifdef _LEONARDO_
-    // Disable USB, because the bootloader has probably left it on
-    USBCON &= ~_BV(USBE);
-#endif
+    //PCICR |= _BV(PCIE1);
 
-    PCICR |= _BV(PCIE1);
+    IO_LOW(PWM0A);
+    IO_LOW(PWM0B);
+    IO_LOW(PWM1A);
+    IO_LOW(PWM1B);
+    IO_LOW(DIR0);
+    IO_LOW(DIR1);
+
+    IO_OUTPUT(PWM0A);
+    IO_OUTPUT(PWM0B);
+    IO_OUTPUT(PWM1A);
+    IO_OUTPUT(PWM1B);
+    IO_OUTPUT(DIR0);
+    IO_OUTPUT(DIR1);
 }

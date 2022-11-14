@@ -23,6 +23,8 @@ void reset(void);
 void eeprom_read_data(uint8_t addr, uint8_t *bytes, uint8_t len);
 void eeprom_write_data(uint8_t addr, uint8_t *bytes, uint8_t len);
 int print_char(char byte, FILE *stream);
+char wdt_getch(void);
+void putch(char byte);
 
 #undef printf
 #define printf(fmt, ...) printf_P(PSTR(fmt) __VA_OPT__(,) __VA_ARGS__)
@@ -30,6 +32,7 @@ int print_char(char byte, FILE *stream);
 #define strcmp_p(str, to) strcmp_P(str, PSTR(to))
 #define strncmp_p(str, to, n) strncmp_P(str, PSTR(to), n)
 #define stricmp(str, to) strcasecmp_P(str, PSTR(to))
+#define delay_10ms(x) _delay_ms((x) * 10)
 
 #define _1DP_BASE 10
 #define _2DP_BASE 100

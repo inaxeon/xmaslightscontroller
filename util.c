@@ -46,6 +46,12 @@ int print_char(char byte, FILE *stream)
     return 0;
 }
 
+void putch(char byte)
+{
+    while (console_busy());
+    console_put(byte);
+}
+
 char wdt_getch(void)
 {
     while (!console_data_ready())
