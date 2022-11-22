@@ -34,10 +34,15 @@
 #include "usart.h"
 #include "util.h"
 #include "pwm.h"
+#include "i2c_slave.h"
+
+#define SEQUENCE_REG    0x00
 
 typedef struct
 {
     sys_config_t *config;
+    uint8_t *i2c_buffer;
+    uint8_t last_sequence;
     bool running;
 } sys_runstate_t;
 
@@ -49,17 +54,19 @@ FILE uart_str = FDEV_SETUP_STREAM(print_char, NULL, _FDEV_SETUP_RW);
 static void io_init(void);
 int random_number(const int min, const int max);
 void run_sequence(sys_runstate_t *rs, uint8_t seq);
-void check_ctrld(void);
+void check_break(sys_runstate_t *rs);
 
-void sequence_00(sys_runstate_t *rs);
-void sequence_01(sys_runstate_t *rs);
+void sequence_00_03(sys_runstate_t *rs, uint8_t brightness);
+void sequence_04(sys_runstate_t *rs);
 
 int main(void)
 {
     sys_runstate_t *rs = &_g_rs;
     sys_config_t *config = &_g_cfg;
     rs->config = config;
+    rs->i2c_buffer = TWI_Get_Buffer();
 
+    memset(rs->i2c_buffer, 0, TWI_BUFFER_SIZE);
     wdt_enable(WDTO_2S);
     io_init();
     g_irq_enable();
@@ -73,6 +80,7 @@ int main(void)
     load_configuration(config);
     configuration_bootprompt(config);
 
+
     printf("Press Ctrl+D at any time to reset\r\n");
 
     CLRWDT();
@@ -80,11 +88,17 @@ int main(void)
     pwm_init();
     pwm_enable();
 
+    TWI_Slave_Initialise(0x23 << 1);
+    TWI_Start_Transceiver();
+
+    rs->i2c_buffer[SEQUENCE_REG] = config->start_seq;
+
     // Idle loop
     for (;;)
     {
         rs->running = true;
-        run_sequence(rs, config->start_seq);
+        rs->last_sequence = rs->i2c_buffer[SEQUENCE_REG];
+        run_sequence(rs, rs->i2c_buffer[SEQUENCE_REG]);
     }
 }
 
@@ -93,10 +107,19 @@ void run_sequence(sys_runstate_t *rs, uint8_t seq)
     switch (seq)
     {
         case 0:
-            sequence_00(rs);
+            sequence_00_03(rs, 0x40);
             break;
         case 1:
-            sequence_01(rs);
+            sequence_00_03(rs, 0x80);
+            break;
+        case 2:
+            sequence_00_03(rs, 0xC0);
+            break;
+        case 3:
+            sequence_00_03(rs, 0xFF);
+            break;
+        case 4:
+            sequence_04(rs);
             break;
         default:
             printf("\r\nInvalid sequence %d. Resetting...\r\n", rs->config->start_seq);
@@ -105,23 +128,20 @@ void run_sequence(sys_runstate_t *rs, uint8_t seq)
 }
 
 // "On" at 1/4 brightness
-void sequence_00(sys_runstate_t *rs)
+void sequence_00_03(sys_runstate_t *rs, uint8_t brightness)
 {
-    uint8_t full_brightness = 0x40;
-
     for (uint8_t i = 0; i < 4; i++)
-        pwm_set_duty(i, full_brightness);
+        pwm_set_duty(i, brightness);
 
     while (rs->running)
     {
         CLRWDT();
-        check_ctrld();
+        check_break(rs);
     }
 }
 
-
-// "Sparkle" between 40% and 100% brightness
-void sequence_01(sys_runstate_t *rs)
+// "Sparkle" between 25% and 100% brightness
+void sequence_04(sys_runstate_t *rs)
 {
     while (rs->running)
     {
@@ -152,11 +172,11 @@ void sequence_01(sys_runstate_t *rs)
             _delay_ms(1);
 
         CLRWDT();
-        check_ctrld();
+        check_break(rs);
     }
 }
 
-void check_ctrld(void)
+void check_break(sys_runstate_t *rs)
 {
     if (console_data_ready())
     {
@@ -168,6 +188,9 @@ void check_ctrld(void)
             reset();
         }
     }
+
+    if (rs->last_sequence != rs->i2c_buffer[SEQUENCE_REG])
+        rs->running = false;
 }
 
 int random_number(const int min, const int max)

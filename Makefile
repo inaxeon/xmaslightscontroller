@@ -9,7 +9,7 @@
 # Fixes clash between windows and coreutils mkdir. Comment out the below line to compile on Linux
 COREUTILS  = C:/Dev/compilers/coreutils/bin/
 
-SRCS       = main.c config.c util.c usart_buffered.c pwm.c
+SRCS       = main.c config.c util.c usart_buffered.c pwm.c i2c_slave.c
 OBJS       = $(SRCS:.c=.o)
 DEPDIR     = deps
 DEPFLAGS   = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
