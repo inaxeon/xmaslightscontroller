@@ -300,35 +300,41 @@ void sequence_12(sys_runstate_t *rs)
     uint16_t num_samples = 500;
     float x_step = 1.0f / num_samples;
 
-    for (uint16_t i = 0; i < num_samples; i++)
+    while(rs->running)
     {
-        uint8_t channel1 = 0;
-        uint8_t channel2 = 0;
-        uint8_t channel3 = 0;
-        uint8_t channel4 = 0;
+        for (uint16_t i = 0; i < num_samples; i++)
+        {
+            uint8_t channel1 = 0;
+            uint8_t channel2 = 0;
+            uint8_t channel3 = 0;
+            uint8_t channel4 = 0;
 
-        float sine = (float)sin(i * x_step * 2 * M_PI);
+            float sine = (float)sin(i * x_step * 2 * M_PI);
 
-        if (sine > 0)
-            channel1 = (uint8_t)(255 * sine);
-        if (sine < 0)
-            channel2 = (uint8_t)(255 * -sine);
+            if (sine > 0)
+                channel1 = (uint8_t)(255 * sine);
+            if (sine < 0)
+                channel2 = (uint8_t)(255 * -sine);
 
-        float sine_shifted = (float)sin((i + num_samples / 4) * x_step * 2 * M_PI);
+            float sine_shifted = (float)sin((i + num_samples / 4) * x_step * 2 * M_PI);
 
-        if (sine_shifted > 0)
-            channel3 = (uint8_t)(255 * sine_shifted);
-        if (sine_shifted < 0)
-            channel4 = (uint8_t)(255 * -sine_shifted);
+            if (sine_shifted > 0)
+                channel3 = (uint8_t)(255 * sine_shifted);
+            if (sine_shifted < 0)
+                channel4 = (uint8_t)(255 * -sine_shifted);
 
-        pwm_set_duty(0, channel1);
-        pwm_set_duty(2, channel2);
-        pwm_set_duty(1, channel3);
-        pwm_set_duty(3, channel4);
+            pwm_set_duty(0, channel1);
+            pwm_set_duty(2, channel2);
+            pwm_set_duty(1, channel3);
+            pwm_set_duty(3, channel4);
 
-        _delay_ms(25);
+            _delay_ms(25);
 
-        check_break(rs);
+            check_break(rs);
+
+            if (!rs->running)
+                break;
+        }
     }
 }
 
