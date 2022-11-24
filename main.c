@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 #include <util/delay.h>
 #include <avr/io.h>
 #include <avr/wdt.h>
@@ -56,8 +57,10 @@ int random_number(const int min, const int max);
 void run_sequence(sys_runstate_t *rs, uint8_t seq);
 void check_break(sys_runstate_t *rs);
 
-void sequence_00_03(sys_runstate_t *rs, uint8_t brightness);
-void sequence_04(sys_runstate_t *rs);
+void sequence_00_09(sys_runstate_t *rs, uint8_t brightness);
+void sequence_10(sys_runstate_t *rs);
+void sequence_11(sys_runstate_t *rs);
+void sequence_12(sys_runstate_t *rs);
 
 int main(void)
 {
@@ -107,19 +110,43 @@ void run_sequence(sys_runstate_t *rs, uint8_t seq)
     switch (seq)
     {
         case 0:
-            sequence_00_03(rs, 0x40);
+            sequence_00_09(rs, 25);
             break;
         case 1:
-            sequence_00_03(rs, 0x80);
+            sequence_00_09(rs, 51);
             break;
         case 2:
-            sequence_00_03(rs, 0xC0);
+            sequence_00_09(rs, 76);
             break;
         case 3:
-            sequence_00_03(rs, 0xFF);
+            sequence_00_09(rs, 102);
             break;
         case 4:
-            sequence_04(rs);
+            sequence_00_09(rs, 127);
+            break;
+        case 5:
+            sequence_00_09(rs, 153);
+            break;
+        case 6:
+            sequence_00_09(rs, 178);
+            break;
+        case 7:
+            sequence_00_09(rs, 204);
+            break;
+        case 8:
+            sequence_00_09(rs, 229);
+            break;
+        case 9:
+            sequence_00_09(rs, 255);
+            break;
+        case 10:
+            sequence_10(rs);
+            break;
+        case 11:
+            sequence_11(rs);
+            break;
+        case 12:
+            sequence_12(rs);
             break;
         default:
             printf("\r\nInvalid sequence %d. Resetting...\r\n", rs->config->start_seq);
@@ -127,21 +154,19 @@ void run_sequence(sys_runstate_t *rs, uint8_t seq)
     }
 }
 
-// "On" at 1/4 brightness
-void sequence_00_03(sys_runstate_t *rs, uint8_t brightness)
+// "On" at variable brightness
+void sequence_00_09(sys_runstate_t *rs, uint8_t brightness)
 {
     for (uint8_t i = 0; i < 4; i++)
         pwm_set_duty(i, brightness);
 
     while (rs->running)
     {
-        CLRWDT();
         check_break(rs);
     }
 }
 
-// "Sparkle" between 25% and 100% brightness
-void sequence_04(sys_runstate_t *rs)
+void sequence_10(sys_runstate_t *rs)
 {
     while (rs->running)
     {
@@ -171,13 +196,146 @@ void sequence_04(sys_runstate_t *rs)
         for (int i = 0; i < delay; i++)
             _delay_ms(1);
 
-        CLRWDT();
+        check_break(rs);
+    }
+}
+
+void sequence_11(sys_runstate_t *rs)
+{
+    uint8_t low_brightness = 0;
+    uint8_t full_brightness = 0xFF;
+    uint8_t step_size = (full_brightness - low_brightness) / 5;
+
+    uint8_t channel1_current = 0;
+    uint8_t channel2_current = 0;
+    uint8_t channel3_current = 0;
+    //uint8_t channel4_current = 0;
+
+    uint8_t channel1_max = 12;
+    uint8_t channel2_max = 11;
+    uint8_t channel3_max = 10;
+    //uint8_t channel4_max = 9;
+
+    pwm_set_duty(3, full_brightness);
+
+    while (rs->running)
+    {
+        uint8_t channel_flag = 0x00;
+
+        if (channel1_current++ >= channel1_max)
+        {
+            channel1_current = 0;
+            channel_flag |= 0x01;
+        }
+
+        if (channel2_current++ >= channel2_max)
+        {
+            channel2_current = 0;
+            channel_flag |= 0x02;
+        }
+
+        if (channel3_current++ >= channel3_max)
+        {
+            channel3_current = 0;
+            channel_flag |= 0x04;
+        }
+
+        // if (channel4_current++ >= channel4_max)
+        // {
+        //     channel4_current = 0;
+        //     channel_flag |= 0x08;
+        // }
+
+
+        for (uint8_t i = 1; i < 5; i++)
+        {
+            if (channel_flag & 0x01)
+                pwm_set_duty(0, low_brightness + (i * step_size));
+            if (channel_flag & 0x02)
+                pwm_set_duty(1, low_brightness + (i * step_size));
+            if (channel_flag & 0x04)
+                pwm_set_duty(2, low_brightness + (i * step_size));
+            // if (channel_flag & 0x08)
+            //     pwm_set_duty(3, low_brightness + (i * step_size));
+
+            _delay_ms(5);
+        }
+
+        if (channel_flag & 0x01)
+            pwm_set_duty(0, full_brightness);
+        if (channel_flag & 0x02)
+            pwm_set_duty(1, full_brightness);
+        if (channel_flag & 0x04)
+            pwm_set_duty(2, full_brightness);
+        // if (channel_flag & 0x08)
+        //     pwm_set_duty(3, full_brightness);
+
+        _delay_ms(25);
+
+        for (uint8_t i = 4; i > 0; i--)
+        {
+            if (channel_flag & 0x01)
+                pwm_set_duty(0, low_brightness + (i * step_size));
+            if (channel_flag & 0x02)
+                pwm_set_duty(1, low_brightness + (i * step_size));
+            if (channel_flag & 0x04)
+                pwm_set_duty(2, low_brightness + (i * step_size));
+            // if (channel_flag & 0x08)
+            //     pwm_set_duty(3, low_brightness + (i * step_size));
+
+            _delay_ms(5);
+        }
+
+        pwm_set_duty(0, low_brightness);
+        pwm_set_duty(1, low_brightness);
+        pwm_set_duty(2, low_brightness);
+        // pwm_set_duty(3, low_brightness);
+
+        check_break(rs);
+    }
+}
+
+void sequence_12(sys_runstate_t *rs)
+{
+    uint16_t num_samples = 500;
+    float x_step = 1.0f / num_samples;
+
+    for (uint16_t i = 0; i < num_samples; i++)
+    {
+        uint8_t channel1 = 0;
+        uint8_t channel2 = 0;
+        uint8_t channel3 = 0;
+        uint8_t channel4 = 0;
+
+        float sine = (float)sin(i * x_step * 2 * M_PI);
+
+        if (sine > 0)
+            channel1 = (uint8_t)(255 * sine);
+        if (sine < 0)
+            channel2 = (uint8_t)(255 * -sine);
+
+        float sine_shifted = (float)sin((i + num_samples / 4) * x_step * 2 * M_PI);
+
+        if (sine_shifted > 0)
+            channel3 = (uint8_t)(255 * sine_shifted);
+        if (sine_shifted < 0)
+            channel4 = (uint8_t)(255 * -sine_shifted);
+
+        pwm_set_duty(0, channel1);
+        pwm_set_duty(2, channel2);
+        pwm_set_duty(1, channel3);
+        pwm_set_duty(3, channel4);
+
+        _delay_ms(25);
+
         check_break(rs);
     }
 }
 
 void check_break(sys_runstate_t *rs)
 {
+    CLRWDT();
+
     if (console_data_ready())
     {
         char c = console_get();
