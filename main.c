@@ -60,7 +60,7 @@ void check_break(sys_runstate_t *rs);
 void sequence_00_09(sys_runstate_t *rs, uint8_t brightness);
 void sequence_10(sys_runstate_t *rs);
 void sequence_11(sys_runstate_t *rs);
-void sequence_12(sys_runstate_t *rs);
+void sequence_12_16(sys_runstate_t *rs, uint8_t delay);
 
 int main(void)
 {
@@ -146,7 +146,19 @@ void run_sequence(sys_runstate_t *rs, uint8_t seq)
             sequence_11(rs);
             break;
         case 12:
-            sequence_12(rs);
+            sequence_12_16(rs, 10);
+            break;
+        case 13:
+            sequence_12_16(rs, 8);
+            break;
+        case 14:
+            sequence_12_16(rs, 6);
+            break;
+        case 15:
+            sequence_12_16(rs, 4);
+            break;
+        case 16:
+            sequence_12_16(rs, 2);
             break;
         default:
             printf("\r\nInvalid sequence %d. Resetting...\r\n", rs->config->start_seq);
@@ -203,7 +215,7 @@ void sequence_10(sys_runstate_t *rs)
 void sequence_11(sys_runstate_t *rs)
 {
     uint8_t low_brightness = 0;
-    uint8_t full_brightness = 0xFF;
+    uint8_t full_brightness = 0x40;
     uint8_t step_size = (full_brightness - low_brightness) / 5;
 
     uint8_t channel1_current = 0;
@@ -216,7 +228,7 @@ void sequence_11(sys_runstate_t *rs)
     uint8_t channel3_max = 10;
     //uint8_t channel4_max = 9;
 
-    pwm_set_duty(3, full_brightness);
+    pwm_set_duty(3, 0xff);
 
     while (rs->running)
     {
@@ -295,40 +307,55 @@ void sequence_11(sys_runstate_t *rs)
     }
 }
 
-void sequence_12(sys_runstate_t *rs)
+void sequence_12_16(sys_runstate_t *rs, uint8_t delay)
 {
-    uint16_t num_samples = 500;
+    uint16_t num_samples = 1000;
     float x_step = 1.0f / num_samples;
+
+    uint8_t channel1 = 0;
+    uint8_t channel2 = 0;
+    uint8_t channel3 = 0;
+    uint8_t channel4 = 0;
 
     while(rs->running)
     {
         for (uint16_t i = 0; i < num_samples; i++)
         {
-            uint8_t channel1 = 0;
-            uint8_t channel2 = 0;
-            uint8_t channel3 = 0;
-            uint8_t channel4 = 0;
-
             float sine = (float)sin(i * x_step * 2 * M_PI);
 
-            if (sine > 0)
-                channel1 = (uint8_t)(255 * sine);
-            if (sine < 0)
-                channel2 = (uint8_t)(255 * -sine);
+            if (sine >= 0)
+                channel1 = (uint8_t)((float)255 * sine);
+            if (sine <= 0)
+                channel2 = (uint8_t)((float)255 * -sine);
 
             float sine_shifted = (float)sin((i + num_samples / 4) * x_step * 2 * M_PI);
 
-            if (sine_shifted > 0)
-                channel3 = (uint8_t)(255 * sine_shifted);
-            if (sine_shifted < 0)
-                channel4 = (uint8_t)(255 * -sine_shifted);
+            if (sine_shifted >= 0)
+                channel3 = (uint8_t)((float)255 * sine_shifted);
+            if (sine_shifted <= 0)
+                channel4 = (uint8_t)((float)255 * -sine_shifted);
+
+            if (channel1 < 5)
+                channel1 = 0;
+
+            if (channel2 < 5)
+                channel2 = 0;
+
+            if (channel3 < 5)
+                channel3 = 0;
+
+            if (channel4 < 5)
+                channel4 = 0;
 
             pwm_set_duty(0, channel1);
             pwm_set_duty(2, channel2);
             pwm_set_duty(1, channel3);
             pwm_set_duty(3, channel4);
 
-            _delay_ms(25);
+            //printf("%03d %03d %03d %03d\r\n", channel1, channel2, channel3, channel4);
+
+            for (int d = 0; d < delay; d++)
+                _delay_ms(1);
 
             check_break(rs);
 

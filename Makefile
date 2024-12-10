@@ -31,9 +31,9 @@ PROGRAMMER = -P COM5 -c arduino -b 115200
 CLOCK      = 16000000
 endif
 ifeq ($(BOARD), FANSPEED)
-DEVICE     = atmega328
+DEVICE     = atmega328p
 CFLAGS     = -D_AVR_FANSPEED_BOARD_
-PROGRAMMER = -c stk500v2 -P COM2 -V
+PROGRAMMER = -c stk500v2 -P COM6 -V
 FUSES      = -U lfuse:w:0xDF:m -U hfuse:w:0xD1:m -U efuse:w:0xFC:m
 CLOCK      = 14745600
 endif

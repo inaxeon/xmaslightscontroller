@@ -1,7 +1,7 @@
 
-CUPL(WM)        5.0a  Serial# 60008009
+CUPL(WM)        5.0a  Serial# MW-10400000
 Device          g22v10  Library DLIB-h-40-1
-Created         Sun Nov 13 11:49:41 2022
+Created         Tue Dec 10 17:42:00 2024
 Name            XMASGAL 
 Partno          00 
 Revision        01 
@@ -42,4 +42,4 @@ Location
 *L05792 00000000000000000000001111111111
 *L05824 11000011000000110000001000000000
 *C4FBC
-*213B
+*21C4

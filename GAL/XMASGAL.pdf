@@ -5,7 +5,7 @@
   {Program "CUPL(WM) Version 5.0a"}
   {DBtype "Schematic"}
   {DBvrev 1.01}
-  {DBtime "Sun Nov 13 11:49:41 2022 "}
+  {DBtime "Wed Mar 13 08:06:27 2024 "}
   {DBunit "MIL"}
   {DBgrid 10}
   {Lyrstr "WIRES" 1 "BUS" 1 "GATE" 2 "IEEE" 2 "PINFUN" 3 "PINNUM" 1 
@@ -104,7 +104,7 @@
    {T "DR4" 270 120}
    [Ly "DEVICE"]
    [Tj "CT"]
-   {T "G22V10" 205 -10}
+   {T "G20V8MA" 205 -10}
   }
 
   {ATR
